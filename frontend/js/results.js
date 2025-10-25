@@ -3,6 +3,25 @@
 let currentPassword = null;
 let refreshInterval = null;
 
+// Helper function to calculate ranks with tie support
+function calculateRanksWithTies(items) {
+    let currentRank = 1;
+    let previousVotes = null;
+
+    return items.map((item, index) => {
+        if (previousVotes !== null && item.vote_count < previousVotes) {
+            currentRank = index + 1;
+        }
+        previousVotes = item.vote_count;
+        return { ...item, rank: currentRank };
+    });
+}
+
+// Helper function to filter to only top 3 ranks
+function filterTopThreeRanks(rankedItems) {
+    return rankedItems.filter(item => item.rank <= 3);
+}
+
 // Handle password form submission
 document.getElementById('passwordForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -78,23 +97,26 @@ function renderResults(results) {
             const resultsList = document.createElement('div');
             resultsList.className = 'results-list';
 
-            // Sort by votes and add rank
+            // Sort by votes, calculate ranks, and filter to top 3
             const sortedResults = categoryData.results
                 .sort((a, b) => b.vote_count - a.vote_count);
 
-            sortedResults.forEach(async (result, index) => {
+            const rankedResults = calculateRanksWithTies(sortedResults);
+            const topThreeResults = filterTopThreeRanks(rankedResults);
+
+            topThreeResults.forEach(async (result) => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'result-item';
 
-                // Mark winner (first place)
-                if (index === 0 && result.vote_count > 0) {
+                // Mark winner (rank 1, could be multiple if tied)
+                if (result.rank === 1 && result.vote_count > 0) {
                     resultItem.classList.add('winner');
                 }
 
                 // Create rank element
                 const rankDiv = document.createElement('div');
                 rankDiv.className = 'result-rank';
-                rankDiv.innerHTML = index === 0 && result.vote_count > 0 ? '🏆' : `#${index + 1}`;
+                rankDiv.innerHTML = result.rank === 1 && result.vote_count > 0 ? '🏆' : `#${result.rank}`;
 
                 // Create image element with loading state
                 const img = document.createElement('img');
@@ -153,29 +175,31 @@ function renderResults(results) {
             const mcResultsList = document.createElement('div');
             mcResultsList.className = 'mc-results-list';
 
-            // Sort by votes
+            // Sort by votes, calculate ranks, and filter to top 3
             const sortedOptions = mcData.options
                 .sort((a, b) => b.vote_count - a.vote_count);
 
-            // Find max votes for percentage calculation
-            const maxVotes = sortedOptions.length > 0 ? sortedOptions[0].vote_count : 0;
-            const totalVotes = sortedOptions.reduce((sum, opt) => sum + opt.vote_count, 0);
+            const rankedOptions = calculateRanksWithTies(sortedOptions);
+            const topThreeOptions = filterTopThreeRanks(rankedOptions);
 
-            sortedOptions.forEach((option, index) => {
+            // Calculate total votes from ALL options (not just top 3) for accurate percentages
+            const totalVotes = mcData.options.reduce((sum, opt) => sum + opt.vote_count, 0);
+
+            topThreeOptions.forEach((option) => {
                 const percentage = totalVotes > 0 ? ((option.vote_count / totalVotes) * 100).toFixed(1) : 0;
 
                 const optionItem = document.createElement('div');
                 optionItem.className = 'mc-result-item';
 
-                // Mark winner (first place)
-                if (index === 0 && option.vote_count > 0) {
+                // Mark winner (rank 1, could be multiple if tied)
+                if (option.rank === 1 && option.vote_count > 0) {
                     optionItem.classList.add('mc-winner');
                 }
 
                 optionItem.innerHTML = `
                     <div class="mc-result-content">
                         <div class="mc-result-rank">
-                            ${index === 0 && option.vote_count > 0 ? '🏆' : `#${index + 1}`}
+                            ${option.rank === 1 && option.vote_count > 0 ? '🏆' : `#${option.rank}`}
                         </div>
                         <div class="mc-result-text">
                             <strong>${option.option_text}</strong>
