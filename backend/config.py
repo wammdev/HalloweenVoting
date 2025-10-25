@@ -37,6 +37,9 @@ RESULTS_PASSWORD = os.getenv("RESULTS_PASSWORD", "spooky2025")
 # Admin password - CHANGE THIS!
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin2025")
 
+# Footer text - displayed on all pages
+FOOTER_TEXT = os.getenv("FOOTER_TEXT", "")
+
 # File upload settings
 UPLOAD_DIR = "uploads"
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB

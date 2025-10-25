@@ -68,6 +68,14 @@ async function init() {
         // Load saved votes
         loadSavedVotes();
 
+        // Preload all images in the background for instant navigation
+        const imageUrls = entries.map(entry => `${API_BASE_URL}${entry.photo_url}`);
+        preloadImages(imageUrls).then(() => {
+            console.log('All images preloaded and cached');
+        }).catch(err => {
+            console.warn('Some images failed to preload:', err);
+        });
+
         // Hide loading, show interface
         document.getElementById('loadingMessage').style.display = 'none';
         document.getElementById('votingInterface').style.display = 'block';

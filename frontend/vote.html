@@ -49,11 +49,25 @@
 
         <footer>
             <p><a href="admin.html" style="color: rgba(255, 255, 255, 0.5); text-decoration: none;">⚙️ Settings</a></p>
+            <p id="footerText" style="margin-top: 0.5rem; text-align: center;"></p>
         </footer>
     </div>
 
     <script src="js/config.js"></script>
-    <script src="js/imageLoader.js"></script>
-    <script src="js/vote.js"></script>
+    <script src="js/imageLoader.js?v=2"></script>
+    <script src="js/vote.js?v=2"></script>
+    <script>
+        // Load footer text from API
+        fetch(`${API_BASE_URL}/api/footer-text`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.text) {
+                document.getElementById('footerText').textContent = data.text;
+            }
+        })
+        .catch(err => console.warn('Failed to load footer text:', err));
+    </script>
 </body>
 </html>
