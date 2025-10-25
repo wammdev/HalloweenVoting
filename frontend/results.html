@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - Halloween Contest</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏆 Contest Results</h1>
+            <p class="subtitle">See who's winning!</p>
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </header>
+
+        <main>
+            <!-- Password prompt -->
+            <div id="passwordPrompt" class="form-container">
+                <h2>Enter Password</h2>
+                <p>Ask the host for the results password</p>
+
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            placeholder="Enter password"
+                        >
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        View Results
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results display (hidden until password is correct) -->
+            <div id="resultsDisplay" style="display: none;">
+                <div class="results-header">
+                    <p>🎃 Live results - refreshing automatically</p>
+                    <button id="refreshBtn" class="btn btn-secondary btn-small">Refresh Now</button>
+                </div>
+
+                <div id="resultsContainer"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Made with 🎃 for the Halloween Party</p>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/results.js"></script>
+</body>
+</html>

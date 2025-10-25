@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Costume - Halloween Contest</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Submit Your Costume</h1>
+            <p class="subtitle">Show us your amazing costume!</p>
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <form id="submitForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="name">Your Name *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            required
+                            maxlength="100"
+                            placeholder="Enter your name(s)"
+                        >
+                        <small>For group costumes, enter all names (e.g., "Alice & Bob")</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costumeName">Costume Name *</label>
+                        <input
+                            type="text"
+                            id="costumeName"
+                            name="costume_name"
+                            required
+                            maxlength="100"
+                            placeholder="What's your costume?"
+                        >
+                        <small>e.g., "Vampire", "Ghostbusters Team", "Spooky Skeleton"</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="photo">Costume Photo *</label>
+                        <input
+                            type="file"
+                            id="photo"
+                            name="photo"
+                            required
+                            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                        >
+                        <small>Max size: 5MB. Formats: JPG, PNG, GIF, WEBP</small>
+                    </div>
+
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <img id="previewImg" src="" alt="Preview">
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                    <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+                        Submit Entry
+                    </button>
+
+                    <div id="uploadProgress" class="progress-bar" style="display: none;">
+                        <div class="progress-fill"></div>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>Made with 🎃 for the Halloween Party</p>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/submit.js"></script>
+</body>
+</html>
