@@ -417,6 +417,68 @@ async def restore_mc_vote(vote_id: str, request: AdminAuthRequest):
     return {"success": True, "message": "MC vote restored"}
 
 
+# Admin endpoints for grouped votes
+
+@app.get("/api/admin/votes-grouped")
+async def get_admin_votes_grouped(password: str):
+    """Get votes grouped by voter (admin only)"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    votes = await database.get_votes_grouped_by_voter_admin()
+    return votes
+
+
+@app.get("/api/admin/mc-votes-grouped")
+async def get_admin_mc_votes_grouped(password: str):
+    """Get MC votes grouped by voter (admin only)"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    votes = await database.get_mc_votes_grouped_by_voter_admin()
+    return votes
+
+
+@app.post("/api/admin/votes/voter/{voter_id}/delete")
+async def delete_all_votes_by_voter(voter_id: str, request: AdminAuthRequest):
+    """Soft delete all votes from a voter (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    count = await database.soft_delete_all_votes_by_voter(voter_id)
+    return {"success": True, "message": f"Deleted {count} votes"}
+
+
+@app.post("/api/admin/votes/voter/{voter_id}/restore")
+async def restore_all_votes_by_voter(voter_id: str, request: AdminAuthRequest):
+    """Restore all votes from a voter (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    count = await database.restore_all_votes_by_voter(voter_id)
+    return {"success": True, "message": f"Restored {count} votes"}
+
+
+@app.post("/api/admin/mc-votes/voter/{voter_id}/delete")
+async def delete_all_mc_votes_by_voter(voter_id: str, request: AdminAuthRequest):
+    """Soft delete all MC votes from a voter (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    count = await database.soft_delete_all_mc_votes_by_voter(voter_id)
+    return {"success": True, "message": f"Deleted {count} MC votes"}
+
+
+@app.post("/api/admin/mc-votes/voter/{voter_id}/restore")
+async def restore_all_mc_votes_by_voter(voter_id: str, request: AdminAuthRequest):
+    """Restore all MC votes from a voter (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    count = await database.restore_all_mc_votes_by_voter(voter_id)
+    return {"success": True, "message": f"Restored {count} MC votes"}
+
+
 if __name__ == "__main__":
     import uvicorn
 

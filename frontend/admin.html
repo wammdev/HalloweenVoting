@@ -21,12 +21,15 @@
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: visible;
             margin-top: 1rem;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
         .admin-table table {
             width: 100%;
+            min-width: 600px; /* Prevent excessive squishing */
             border-collapse: collapse;
         }
 

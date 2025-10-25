@@ -380,3 +380,76 @@ async def restore_mc_vote(vote_id: str) -> bool:
         await db.execute("UPDATE mc_votes SET deleted = 0 WHERE id = ?", (vote_id,))
         await db.commit()
         return True
+
+
+# Admin functions for grouped votes by voter
+
+async def get_votes_grouped_by_voter_admin() -> List[Dict]:
+    """Get votes grouped by voter_id (admin only)"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("""
+            SELECT
+                voter_id,
+                GROUP_CONCAT(category, ', ') as categories,
+                COUNT(*) as vote_count,
+                MAX(CASE WHEN deleted = 1 THEN 1 ELSE 0 END) as has_deleted,
+                MIN(CASE WHEN deleted = 0 THEN 0 ELSE 1 END) as all_deleted
+            FROM votes
+            GROUP BY voter_id
+            ORDER BY MAX(created_at) DESC
+        """) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+
+async def get_mc_votes_grouped_by_voter_admin() -> List[Dict]:
+    """Get MC votes grouped by voter_id (admin only)"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("""
+            SELECT
+                v.voter_id,
+                GROUP_CONCAT(q.question, ' | ') as questions,
+                COUNT(*) as vote_count,
+                MAX(CASE WHEN v.deleted = 1 THEN 1 ELSE 0 END) as has_deleted,
+                MIN(CASE WHEN v.deleted = 0 THEN 0 ELSE 1 END) as all_deleted
+            FROM mc_votes v
+            LEFT JOIN mc_questions q ON v.question_id = q.id
+            GROUP BY v.voter_id
+            ORDER BY MAX(v.created_at) DESC
+        """) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+
+async def soft_delete_all_votes_by_voter(voter_id: str) -> int:
+    """Soft delete all votes from a specific voter"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        cursor = await db.execute("UPDATE votes SET deleted = 1 WHERE voter_id = ?", (voter_id,))
+        await db.commit()
+        return cursor.rowcount
+
+
+async def restore_all_votes_by_voter(voter_id: str) -> int:
+    """Restore all votes from a specific voter"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        cursor = await db.execute("UPDATE votes SET deleted = 0 WHERE voter_id = ?", (voter_id,))
+        await db.commit()
+        return cursor.rowcount
+
+
+async def soft_delete_all_mc_votes_by_voter(voter_id: str) -> int:
+    """Soft delete all MC votes from a specific voter"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        cursor = await db.execute("UPDATE mc_votes SET deleted = 1 WHERE voter_id = ?", (voter_id,))
+        await db.commit()
+        return cursor.rowcount
+
+
+async def restore_all_mc_votes_by_voter(voter_id: str) -> int:
+    """Restore all MC votes from a specific voter"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        cursor = await db.execute("UPDATE mc_votes SET deleted = 0 WHERE voter_id = ?", (voter_id,))
+        await db.commit()
+        return cursor.rowcount

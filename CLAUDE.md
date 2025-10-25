@@ -69,12 +69,15 @@ ngrok http 8000
 
 ### Clear Data and Restart
 ```bash
-# Stop backend, delete database and uploads, restart everything
+# Full refresh - Stop backend, delete database and uploads, restart everything
 ./refresh.sh
+
+# Soft refresh - Restart backend without deleting data (for password/software changes)
+./refresh.sh --soft
 
 # This script:
 # 1. Kills backend process
-# 2. Deletes halloween.db and uploads/*
+# 2. Deletes halloween.db and uploads/* (SKIPPED in --soft mode)
 # 3. Starts backend in background
 # 4. Optionally starts ngrok
 # 5. Updates config.js with new ngrok URL
@@ -149,7 +152,8 @@ Database auto-initializes on first run:
 ### refresh.sh
 Main workflow automation:
 - Stops running backend (finds PID via `pgrep -f "python.*app.py"`)
-- Deletes `backend/halloween.db` and `backend/uploads/*` (except .gitkeep)
+- **Full refresh** (default): Deletes `backend/halloween.db` and `backend/uploads/*` (except .gitkeep)
+- **Soft refresh** (`--soft` flag): Retains database and photos - use for password/config changes during party
 - Starts backend in background (logs to `/tmp/halloween_backend.log`)
 - Checks if ngrok already running, reuses URL if possible
 - If starting new ngrok: updates `config.js`, commits, and pushes to GitHub
@@ -161,17 +165,21 @@ Simple ngrok starter with log output to stdout.
 ## Development Workflow
 
 1. **Before Party**: Run `./refresh.sh` to clear test data
-2. **Backend**: Auto-starts on localhost:8000 (refresh.sh handles this)
-3. **ngrok**: Auto-starts and updates config.js (refresh.sh handles this)
-4. **Frontend**: Changes auto-deploy via GitHub Pages when pushed
-5. **Testing**: Use local Python HTTP server for offline testing
+2. **During Party**: Run `./refresh.sh --soft` to apply password/software changes without losing votes
+3. **Backend**: Auto-starts on localhost:8000 (refresh.sh handles this)
+4. **ngrok**: Auto-starts and updates config.js (refresh.sh handles this)
+5. **Frontend**: Changes auto-deploy via GitHub Pages when pushed
+6. **Testing**: Use local Python HTTP server for offline testing
 
 ## Configuration Notes
 
-- **Results Password**: Change in `backend/config.py` or via env var `RESULTS_PASSWORD`
+- **Passwords**: Set in `.env` file (copy from `.env.example`) - `RESULTS_PASSWORD` and `ADMIN_PASSWORD`
+  - Create `.env`: `cp .env.example .env` then edit with your secure passwords
+  - `.env` is gitignored for security - never commit it
+  - Use `./refresh.sh --soft` to apply password changes without losing data
 - **API URL**: Automatically switches in `config.js` based on hostname (localhost vs GitHub Pages)
-- **Categories**: Add/modify in `config.py`, database updates automatically on restart
-- **MC Questions**: Add in `config.py` MULTIPLE_CHOICE_QUESTIONS array with unique IDs
+- **Categories**: Add/modify in `backend/config.py`, database updates automatically on restart
+- **MC Questions**: Add in `backend/config.py` MULTIPLE_CHOICE_QUESTIONS array with unique IDs
 
 ## Important Conventions
 

@@ -1,8 +1,28 @@
 #!/bin/bash
 # Refresh script - Clears database, restarts backend and ngrok
 
-echo "🎃 Halloween Voting System - Refresh Script"
-echo "==========================================="
+# Parse command line arguments
+SOFT_REFRESH=false
+
+if [ "$1" = "--soft" ]; then
+    SOFT_REFRESH=true
+    echo "🎃 Halloween Voting System - Soft Refresh Script"
+    echo "================================================="
+    echo "   (Retaining database and photos)"
+elif [ ! -z "$1" ]; then
+    echo "Usage: $0 [--soft]"
+    echo ""
+    echo "Options:"
+    echo "  --soft    Restart backend without deleting database and photos"
+    echo "            (Use for password/software changes while keeping user data)"
+    echo ""
+    echo "  (none)    Full refresh - deletes database and photos"
+    echo "            (Use before party to clear test data)"
+    exit 1
+else
+    echo "🎃 Halloween Voting System - Refresh Script"
+    echo "==========================================="
+fi
 echo ""
 
 # Check if backend is running
@@ -25,28 +45,41 @@ fi
 
 echo ""
 
-# Clear database
-if [ -f "backend/halloween.db" ]; then
-    echo "🗑️  Deleting database..."
-    rm backend/halloween.db
-    echo "   ✅ Database deleted"
+# Clear database (skip if soft refresh)
+if [ "$SOFT_REFRESH" = false ]; then
+    if [ -f "backend/halloween.db" ]; then
+        echo "🗑️  Deleting database..."
+        rm backend/halloween.db
+        echo "   ✅ Database deleted"
+    else
+        echo "ℹ️  No database to delete"
+    fi
+
+    echo ""
+
+    # Clear uploads
+    UPLOAD_COUNT=$(ls -1 backend/uploads/ 2>/dev/null | grep -v ".gitkeep" | wc -l)
+    if [ $UPLOAD_COUNT -gt 0 ]; then
+        echo "🗑️  Deleting $UPLOAD_COUNT uploaded file(s)..."
+        find backend/uploads/ -type f ! -name ".gitkeep" -delete
+        echo "   ✅ Uploads cleared"
+    else
+        echo "ℹ️  No uploads to delete"
+    fi
+
+    echo ""
 else
-    echo "ℹ️  No database to delete"
+    echo "💾 Soft refresh - retaining database and photos"
+
+    if [ -f "backend/halloween.db" ]; then
+        DB_SIZE=$(du -h backend/halloween.db | cut -f1)
+        echo "   📊 Database: $DB_SIZE"
+    fi
+
+    UPLOAD_COUNT=$(ls -1 backend/uploads/ 2>/dev/null | grep -v ".gitkeep" | wc -l)
+    echo "   📸 Photos: $UPLOAD_COUNT file(s)"
+    echo ""
 fi
-
-echo ""
-
-# Clear uploads
-UPLOAD_COUNT=$(ls -1 backend/uploads/ 2>/dev/null | grep -v ".gitkeep" | wc -l)
-if [ $UPLOAD_COUNT -gt 0 ]; then
-    echo "🗑️  Deleting $UPLOAD_COUNT uploaded file(s)..."
-    find backend/uploads/ -type f ! -name ".gitkeep" -delete
-    echo "   ✅ Uploads cleared"
-else
-    echo "ℹ️  No uploads to delete"
-fi
-
-echo ""
 echo "==========================================="
 echo "🚀 Starting services..."
 echo "==========================================="
@@ -195,7 +228,12 @@ fi
 
 echo ""
 echo "==========================================="
-echo "✅ Refresh complete!"
+if [ "$SOFT_REFRESH" = true ]; then
+    echo "✅ Soft refresh complete!"
+    echo "   (Database and photos retained)"
+else
+    echo "✅ Refresh complete!"
+fi
 echo "==========================================="
 echo ""
 echo "📊 Service Status:"
