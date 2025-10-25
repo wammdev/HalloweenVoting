@@ -2,6 +2,12 @@
 Configuration for Halloween Voting System
 """
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Categories for voting
 CATEGORIES = [
@@ -27,6 +33,9 @@ MULTIPLE_CHOICE_QUESTIONS = [
 
 # Results password - CHANGE THIS!
 RESULTS_PASSWORD = os.getenv("RESULTS_PASSWORD", "spooky2025")
+
+# Admin password - CHANGE THIS!
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin2025")
 
 # File upload settings
 UPLOAD_DIR = "uploads"

@@ -17,6 +17,7 @@ from config import (
     ALLOWED_EXTENSIONS,
     ALLOWED_ORIGINS,
     RESULTS_PASSWORD,
+    ADMIN_PASSWORD,
 )
 from models import (
     Entry,
@@ -31,6 +32,10 @@ from models import (
     MCVoteCreate,
     MCResultsResponse,
     MCOptionResult,
+    AdminAuthRequest,
+    AdminEntry,
+    AdminVote,
+    AdminMCVote,
 )
 import database
 
@@ -276,6 +281,140 @@ async def get_upload(filename: str):
         raise HTTPException(status_code=403, detail="Access denied")
 
     return FileResponse(file_path)
+
+
+# Admin endpoints
+
+@app.post("/api/admin/auth")
+async def admin_auth(request: AdminAuthRequest):
+    """Authenticate admin with password"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    return {"success": True, "message": "Authenticated"}
+
+
+@app.get("/api/admin/entries", response_model=list[AdminEntry])
+async def get_admin_entries(password: str):
+    """Get all entries including deleted (admin only)"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    entries = await database.get_all_entries_admin()
+    return [
+        AdminEntry(
+            id=entry["id"],
+            name=entry["name"],
+            costume_name=entry["costume_name"],
+            photo_url=f"/api/uploads/{entry['photo_filename']}",
+            deleted=bool(entry["deleted"]),
+            created_at=entry["created_at"],
+        )
+        for entry in entries
+    ]
+
+
+@app.get("/api/admin/votes", response_model=list[AdminVote])
+async def get_admin_votes(password: str):
+    """Get all votes including deleted (admin only)"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    votes = await database.get_all_votes_admin()
+    return [
+        AdminVote(
+            id=vote["id"],
+            voter_id=vote["voter_id"],
+            category=vote["category"],
+            entry_id=vote["entry_id"],
+            entry_name=vote.get("entry_name"),
+            costume_name=vote.get("costume_name"),
+            deleted=bool(vote["deleted"]),
+            created_at=vote["created_at"],
+        )
+        for vote in votes
+    ]
+
+
+@app.get("/api/admin/mc-votes", response_model=list[AdminMCVote])
+async def get_admin_mc_votes(password: str):
+    """Get all MC votes including deleted (admin only)"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    votes = await database.get_all_mc_votes_admin()
+    return [
+        AdminMCVote(
+            id=vote["id"],
+            voter_id=vote["voter_id"],
+            question_id=vote["question_id"],
+            question=vote.get("question"),
+            option_id=vote["option_id"],
+            option_text=vote.get("option_text"),
+            deleted=bool(vote["deleted"]),
+            created_at=vote["created_at"],
+        )
+        for vote in votes
+    ]
+
+
+@app.post("/api/admin/entries/{entry_id}/delete")
+async def delete_entry(entry_id: str, request: AdminAuthRequest):
+    """Soft delete an entry (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.soft_delete_entry(entry_id)
+    return {"success": True, "message": "Entry deleted"}
+
+
+@app.post("/api/admin/entries/{entry_id}/restore")
+async def restore_entry(entry_id: str, request: AdminAuthRequest):
+    """Restore a deleted entry (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.restore_entry(entry_id)
+    return {"success": True, "message": "Entry restored"}
+
+
+@app.post("/api/admin/votes/{vote_id}/delete")
+async def delete_vote(vote_id: str, request: AdminAuthRequest):
+    """Soft delete a vote (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.soft_delete_vote(vote_id)
+    return {"success": True, "message": "Vote deleted"}
+
+
+@app.post("/api/admin/votes/{vote_id}/restore")
+async def restore_vote(vote_id: str, request: AdminAuthRequest):
+    """Restore a deleted vote (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.restore_vote(vote_id)
+    return {"success": True, "message": "Vote restored"}
+
+
+@app.post("/api/admin/mc-votes/{vote_id}/delete")
+async def delete_mc_vote(vote_id: str, request: AdminAuthRequest):
+    """Soft delete an MC vote (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.soft_delete_mc_vote(vote_id)
+    return {"success": True, "message": "MC vote deleted"}
+
+
+@app.post("/api/admin/mc-votes/{vote_id}/restore")
+async def restore_mc_vote(vote_id: str, request: AdminAuthRequest):
+    """Restore a deleted MC vote (admin only)"""
+    if request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+    await database.restore_mc_vote(vote_id)
+    return {"success": True, "message": "MC vote restored"}
 
 
 if __name__ == "__main__":

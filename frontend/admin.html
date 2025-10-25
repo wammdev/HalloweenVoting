@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Halloween Contest</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-section {
+            margin-bottom: 3rem;
+        }
+
+        .admin-section h2 {
+            color: var(--primary-orange);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-orange);
+        }
+
+        .admin-table {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th {
+            background: rgba(255, 107, 0, 0.2);
+            padding: 1rem;
+            text-align: left;
+            font-weight: bold;
+            color: var(--primary-orange);
+        }
+
+        .admin-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .admin-table img {
+            max-width: 80px;
+            max-height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .deleted-row {
+            opacity: 0.5;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 0, 0.2);
+            color: #4ade80;
+        }
+
+        .status-deleted {
+            background: rgba(255, 0, 0, 0.2);
+            color: #f87171;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-delete {
+            background: #dc2626;
+        }
+
+        .btn-delete:hover {
+            background: #b91c1c;
+        }
+
+        .btn-restore {
+            background: #16a34a;
+        }
+
+        .btn-restore:hover {
+            background: #15803d;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-orange);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Admin Panel</h1>
+            <p class="subtitle">Manage entries and votes</p>
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </header>
+
+        <main>
+            <!-- Password prompt -->
+            <div id="passwordPrompt" class="form-container">
+                <h2>Admin Authentication</h2>
+                <p>Enter the admin password to access the admin panel</p>
+
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="password">Admin Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            placeholder="Enter admin password"
+                        >
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        Access Admin Panel
+                    </button>
+                </form>
+            </div>
+
+            <!-- Admin display (hidden until password is correct) -->
+            <div id="adminDisplay" style="display: none;">
+                <!-- Statistics -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEntries">0</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalVotes">0</div>
+                        <div class="stat-label">Total Votes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalMcVotes">0</div>
+                        <div class="stat-label">MC Votes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="deletedItems">0</div>
+                        <div class="stat-label">Deleted Items</div>
+                    </div>
+                </div>
+
+                <!-- Entries Section -->
+                <div class="admin-section">
+                    <h2>📸 Costume Entries</h2>
+                    <div id="entriesContainer" class="admin-table"></div>
+                </div>
+
+                <!-- Votes Section -->
+                <div class="admin-section">
+                    <h2>🗳️ Costume Votes</h2>
+                    <div id="votesContainer" class="admin-table"></div>
+                </div>
+
+                <!-- MC Votes Section -->
+                <div class="admin-section">
+                    <h2>📋 Multiple Choice Votes</h2>
+                    <div id="mcVotesContainer" class="admin-table"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Made with 🎃 for the Halloween Party</p>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/imageLoader.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

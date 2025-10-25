@@ -97,3 +97,44 @@ class MCResultsResponse(BaseModel):
     question_id: str
     question: str
     options: list[MCOptionResult]
+
+
+# Admin models
+
+class AdminAuthRequest(BaseModel):
+    """Model for admin authentication"""
+    password: str
+
+
+class AdminEntry(BaseModel):
+    """Model for admin entry view (includes deleted flag)"""
+    id: str
+    name: str
+    costume_name: str
+    photo_url: str
+    deleted: bool
+    created_at: datetime
+
+
+class AdminVote(BaseModel):
+    """Model for admin vote view (includes deleted flag and entry details)"""
+    id: str
+    voter_id: Optional[str]
+    category: str
+    entry_id: str
+    entry_name: Optional[str]
+    costume_name: Optional[str]
+    deleted: bool
+    created_at: datetime
+
+
+class AdminMCVote(BaseModel):
+    """Model for admin MC vote view (includes deleted flag and question/option details)"""
+    id: str
+    voter_id: Optional[str]
+    question_id: str
+    question: Optional[str]
+    option_id: str
+    option_text: Optional[str]
+    deleted: bool
+    created_at: datetime
