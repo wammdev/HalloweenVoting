@@ -5,7 +5,7 @@
 const LOCAL_API_URL = 'http://localhost:8000';
 
 // For production (update with your ngrok URL)
-// Example: const PRODUCTION_API_URL = 'https://abc123.ngrok.io';
+// Example: const PRODUCTION_API_URL = 'https://highflying-camren-reserved.ngrok-free.dev';
 const PRODUCTION_API_URL = 'https://highflying-camren-reserved.ngrok-free.dev';
 
 // Automatically detect environment
