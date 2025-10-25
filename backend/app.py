@@ -19,6 +19,8 @@ from config import (
     RESULTS_PASSWORD,
     ADMIN_PASSWORD,
     FOOTER_TEXT,
+    HEADER_TEXT,
+    HEADER_SUBTEXT,
 )
 from models import (
     Entry,
@@ -82,6 +84,15 @@ async def root():
 async def get_footer_text():
     """Get footer text from configuration"""
     return {"text": FOOTER_TEXT}
+
+
+@app.get("/api/header-text")
+async def get_header_text():
+    """Get header text and subtext from configuration"""
+    return {
+        "text": HEADER_TEXT,
+        "subtext": HEADER_SUBTEXT
+    }
 
 
 @app.get("/api/categories", response_model=list[Category])

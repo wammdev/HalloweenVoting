@@ -40,6 +40,12 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin2025")
 # Footer text - displayed on all pages
 FOOTER_TEXT = os.getenv("FOOTER_TEXT", "")
 
+# Header text - displayed on home page
+HEADER_TEXT = os.getenv("HEADER_TEXT", "🎃 Halloween Costume Contest")
+
+# Header subtext - displayed on home page
+HEADER_SUBTEXT = os.getenv("HEADER_SUBTEXT", "Join the fun! Submit your costume and vote for your favorites")
+
 # File upload settings
 UPLOAD_DIR = "uploads"
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB

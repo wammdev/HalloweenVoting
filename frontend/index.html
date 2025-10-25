@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎃 Halloween Costume Contest</h1>
-            <p class="subtitle">Join the fun! Submit your costume and vote for your favorites</p>
+            <h1 id="headerText">🎃 Halloween Costume Contest</h1>
+            <p class="subtitle" id="headerSubtext">Join the fun! Submit your costume and vote for your favorites</p>
         </header>
 
         <main class="landing-page">
@@ -54,6 +54,21 @@
     <script src="js/config.js"></script>
     <script src="js/index.js"></script>
     <script>
+        // Load header text from API
+        fetch(`${API_BASE_URL}/api/header-text`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.text) {
+                document.getElementById('headerText').textContent = data.text;
+            }
+            if (data.subtext) {
+                document.getElementById('headerSubtext').textContent = data.subtext;
+            }
+        })
+        .catch(err => console.warn('Failed to load header text:', err));
+
         // Load footer text from API
         fetch(`${API_BASE_URL}/api/footer-text`, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
