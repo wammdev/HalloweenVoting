@@ -38,7 +38,8 @@ async function loadResults(password) {
         const response = await fetch(`${API_BASE_URL}/api/results`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
             },
             body: JSON.stringify({ password })
         });

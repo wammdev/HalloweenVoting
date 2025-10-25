@@ -74,6 +74,9 @@ form.addEventListener('submit', async function(e) {
         // Submit to API
         const response = await fetch(`${API_BASE_URL}/api/entries`, {
             method: 'POST',
+            headers: {
+                'ngrok-skip-browser-warning': 'true'
+            },
             body: formData
         });
 

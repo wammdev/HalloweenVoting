@@ -5,10 +5,11 @@ import os
 
 # Categories for voting
 CATEGORIES = [
-    {"id": "scariest", "name": "Scariest", "order": 1},
-    {"id": "most_creative", "name": "Most Creative", "order": 2},
-    {"id": "funniest", "name": "Funniest", "order": 3},
-    {"id": "best_group", "name": "Best Group Costume", "order": 4},
+    {"id": "scaries", "name": "Scariest: Ruthless killer", "order": 1},
+    {"id": "original", "name": "Original: Mastermind of Mayhem", "order": 2},
+    {"id": "couples", "name": "Couples: Partners in Crime", "order": 3},
+    {"id": "funniest", "name": "Funniest: Laughing in the Face of Death", "order": 4},
+    {"id": "nontheme", "name": "Non-Theme: Off the Record", "order": 5},
 ]
 
 # Results password - CHANGE THIS!

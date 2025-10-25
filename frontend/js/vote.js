@@ -32,12 +32,20 @@ function getVoterId() {
 async function init() {
     try {
         // Load categories
-        const categoriesResponse = await fetch(`${API_BASE_URL}/api/categories`);
+        const categoriesResponse = await fetch(`${API_BASE_URL}/api/categories`, {
+            headers: {
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
         if (!categoriesResponse.ok) throw new Error('Failed to load categories');
         categories = await categoriesResponse.json();
 
         // Load entries
-        const entriesResponse = await fetch(`${API_BASE_URL}/api/entries`);
+        const entriesResponse = await fetch(`${API_BASE_URL}/api/entries`, {
+            headers: {
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
         if (!entriesResponse.ok) throw new Error('Failed to load entries');
         entries = await entriesResponse.json();
 
@@ -188,7 +196,8 @@ document.getElementById('submitVotes').addEventListener('click', async function(
             return fetch(`${API_BASE_URL}/api/votes`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 },
                 body: JSON.stringify({
                     category: categoryId,
