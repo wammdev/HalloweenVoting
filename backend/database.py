@@ -6,7 +6,7 @@ import aiosqlite
 from typing import List, Optional, Dict
 from datetime import datetime
 import uuid
-from config import DATABASE_PATH, CATEGORIES
+from config import DATABASE_PATH, CATEGORIES, MULTIPLE_CHOICE_QUESTIONS
 
 
 async def init_db():
@@ -45,6 +45,39 @@ async def init_db():
             )
         """)
 
+        # Create multiple choice questions table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS mc_questions (
+                id TEXT PRIMARY KEY,
+                question TEXT NOT NULL,
+                display_order INTEGER
+            )
+        """)
+
+        # Create multiple choice options table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS mc_options (
+                id TEXT PRIMARY KEY,
+                question_id TEXT NOT NULL,
+                option_text TEXT NOT NULL,
+                FOREIGN KEY (question_id) REFERENCES mc_questions(id)
+            )
+        """)
+
+        # Create multiple choice votes table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS mc_votes (
+                id TEXT PRIMARY KEY,
+                voter_id TEXT,
+                question_id TEXT NOT NULL,
+                option_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (question_id) REFERENCES mc_questions(id),
+                FOREIGN KEY (option_id) REFERENCES mc_options(id),
+                UNIQUE(voter_id, question_id) ON CONFLICT REPLACE
+            )
+        """)
+
         await db.commit()
 
         # Insert default categories if not exist
@@ -53,6 +86,19 @@ async def init_db():
                 INSERT OR IGNORE INTO categories (id, name, display_order)
                 VALUES (?, ?, ?)
             """, (cat["id"], cat["name"], cat["order"]))
+
+        # Insert multiple choice questions and options
+        for question in MULTIPLE_CHOICE_QUESTIONS:
+            await db.execute("""
+                INSERT OR IGNORE INTO mc_questions (id, question, display_order)
+                VALUES (?, ?, ?)
+            """, (question["id"], question["question"], question["order"]))
+
+            for option in question["options"]:
+                await db.execute("""
+                    INSERT OR IGNORE INTO mc_options (id, question_id, option_text)
+                    VALUES (?, ?, ?)
+                """, (option["id"], question["id"], option["text"]))
 
         await db.commit()
 
@@ -146,3 +192,92 @@ async def get_categories() -> List[Dict]:
         """) as cursor:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
+
+
+async def get_mc_questions() -> List[Dict]:
+    """Get all multiple choice questions with their options"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        questions = []
+        async with db.execute("""
+            SELECT id, question, display_order
+            FROM mc_questions
+            ORDER BY display_order
+        """) as cursor:
+            question_rows = await cursor.fetchall()
+
+            for q_row in question_rows:
+                question = dict(q_row)
+
+                # Get options for this question
+                async with db.execute("""
+                    SELECT id, option_text
+                    FROM mc_options
+                    WHERE question_id = ?
+                    ORDER BY id
+                """, (question["id"],)) as opt_cursor:
+                    option_rows = await opt_cursor.fetchall()
+                    question["options"] = [dict(opt) for opt in option_rows]
+
+                questions.append(question)
+
+        return questions
+
+
+async def create_mc_vote(question_id: str, option_id: str, voter_id: Optional[str] = None) -> str:
+    """Create a multiple choice vote and return its ID"""
+    vote_id = str(uuid.uuid4())
+
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        # Check if question exists
+        async with db.execute("SELECT id FROM mc_questions WHERE id = ?", (question_id,)) as cursor:
+            if not await cursor.fetchone():
+                raise ValueError("Question not found")
+
+        # Check if option exists and belongs to the question
+        async with db.execute(
+            "SELECT id FROM mc_options WHERE id = ? AND question_id = ?",
+            (option_id, question_id)
+        ) as cursor:
+            if not await cursor.fetchone():
+                raise ValueError("Option not found or does not belong to this question")
+
+        # Insert vote (will replace if voter_id+question_id already exists)
+        await db.execute("""
+            INSERT INTO mc_votes (id, voter_id, question_id, option_id)
+            VALUES (?, ?, ?, ?)
+        """, (vote_id, voter_id, question_id, option_id))
+        await db.commit()
+
+    return vote_id
+
+
+async def get_mc_results() -> Dict[str, Dict]:
+    """Get multiple choice vote results"""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        results = {}
+
+        for question in MULTIPLE_CHOICE_QUESTIONS:
+            question_id = question["id"]
+
+            async with db.execute("""
+                SELECT
+                    o.id as option_id,
+                    o.option_text,
+                    COUNT(v.id) as vote_count
+                FROM mc_options o
+                LEFT JOIN mc_votes v ON o.id = v.option_id AND v.question_id = ?
+                WHERE o.question_id = ?
+                GROUP BY o.id
+                ORDER BY vote_count DESC, o.option_text ASC
+            """, (question_id, question_id)) as cursor:
+                rows = await cursor.fetchall()
+                results[question_id] = {
+                    "question": question["question"],
+                    "options": [dict(row) for row in rows]
+                }
+
+        return results

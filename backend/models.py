@@ -62,3 +62,38 @@ class Category(BaseModel):
 class ResultsRequest(BaseModel):
     """Model for requesting results with password"""
     password: str
+
+
+class MCOption(BaseModel):
+    """Model for a multiple choice option"""
+    id: str
+    option_text: str
+
+
+class MCQuestion(BaseModel):
+    """Model for a multiple choice question"""
+    id: str
+    question: str
+    display_order: int
+    options: list[MCOption]
+
+
+class MCVoteCreate(BaseModel):
+    """Model for creating a multiple choice vote"""
+    question_id: str = Field(..., min_length=1)
+    option_id: str = Field(..., min_length=1)
+    voter_id: Optional[str] = None
+
+
+class MCOptionResult(BaseModel):
+    """Model for multiple choice option results"""
+    option_id: str
+    option_text: str
+    vote_count: int
+
+
+class MCResultsResponse(BaseModel):
+    """Model for multiple choice question results"""
+    question_id: str
+    question: str
+    options: list[MCOptionResult]

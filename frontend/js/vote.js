@@ -2,8 +2,10 @@
 
 let categories = [];
 let entries = [];
+let mcQuestions = [];
 let currentCategoryIndex = 0;
 let votes = {}; // { categoryId: entryId }
+let mcVotes = {}; // { questionId: optionId }
 
 // Load saved votes from localStorage
 function loadSavedVotes() {
@@ -11,11 +13,16 @@ function loadSavedVotes() {
     if (saved) {
         votes = JSON.parse(saved);
     }
+    const savedMc = localStorage.getItem('halloween_mc_votes');
+    if (savedMc) {
+        mcVotes = JSON.parse(savedMc);
+    }
 }
 
 // Save votes to localStorage
 function saveVotes() {
     localStorage.setItem('halloween_votes', JSON.stringify(votes));
+    localStorage.setItem('halloween_mc_votes', JSON.stringify(mcVotes));
 }
 
 // Generate voter ID (simple fingerprint)
@@ -49,6 +56,15 @@ async function init() {
         if (!entriesResponse.ok) throw new Error('Failed to load entries');
         entries = await entriesResponse.json();
 
+        // Load multiple choice questions
+        const mcResponse = await fetch(`${API_BASE_URL}/api/mc-questions`, {
+            headers: {
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
+        if (!mcResponse.ok) throw new Error('Failed to load questions');
+        mcQuestions = await mcResponse.json();
+
         // Load saved votes
         loadSavedVotes();
 
@@ -74,6 +90,7 @@ function renderCategoryTabs() {
     const tabsContainer = document.getElementById('categoryTabs');
     tabsContainer.innerHTML = '';
 
+    // Add costume category tabs
     categories.forEach((category, index) => {
         const tab = document.createElement('button');
         tab.className = 'category-tab';
@@ -93,44 +110,122 @@ function renderCategoryTabs() {
 
         tabsContainer.appendChild(tab);
     });
+
+    // Add MC question tabs
+    mcQuestions.forEach((question, mcIndex) => {
+        const index = categories.length + mcIndex;
+        const tab = document.createElement('button');
+        tab.className = 'category-tab mc-tab';
+        tab.textContent = '📋 ' + question.question;
+        tab.onclick = () => {
+            currentCategoryIndex = index;
+            renderCategory();
+        };
+
+        if (index === currentCategoryIndex) {
+            tab.classList.add('active');
+        }
+
+        if (mcVotes[question.id]) {
+            tab.classList.add('voted');
+        }
+
+        tabsContainer.appendChild(tab);
+    });
 }
 
 // Render current category's costumes
 function renderCategory() {
-    const currentCategory = categories[currentCategoryIndex];
     const gallery = document.getElementById('costumeGallery');
 
     // Update tabs
     renderCategoryTabs();
 
+    // Check if we're showing a costume category or MC question
+    const totalCategories = categories.length + mcQuestions.length;
+    const isMcQuestion = currentCategoryIndex >= categories.length;
+
     // Update voting status
-    const votedCount = Object.keys(votes).length;
-    const statusText = `You've voted in ${votedCount} of ${categories.length} categories`;
+    const votedCount = Object.keys(votes).length + Object.keys(mcVotes).length;
+    const statusText = `You've voted in ${votedCount} of ${totalCategories} categories`;
     document.getElementById('votingStatus').textContent = statusText;
 
-    // Render costumes
+    // Render appropriate content
     gallery.innerHTML = '';
 
-    entries.forEach(entry => {
-        const card = document.createElement('div');
-        card.className = 'costume-card';
+    if (isMcQuestion) {
+        // Render MC question
+        const mcIndex = currentCategoryIndex - categories.length;
+        const question = mcQuestions[mcIndex];
 
-        if (votes[currentCategory.id] === entry.id) {
-            card.classList.add('selected');
-        }
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'mc-question-container';
+        questionDiv.innerHTML = `<h2 class="mc-question-title">${question.question}</h2>`;
 
-        card.innerHTML = `
-            <img src="${API_BASE_URL}${entry.photo_url}" alt="${entry.costume_name}">
-            <div class="costume-card-info">
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'mc-options';
+
+        question.options.forEach(option => {
+            const optionCard = document.createElement('div');
+            optionCard.className = 'mc-option-card';
+
+            if (mcVotes[question.id] === option.id) {
+                optionCard.classList.add('selected');
+            }
+
+            optionCard.innerHTML = `
+                <div class="mc-option-text">${option.option_text}</div>
+            `;
+
+            optionCard.onclick = () => selectMcOption(question.id, option.id);
+
+            optionsDiv.appendChild(optionCard);
+        });
+
+        questionDiv.appendChild(optionsDiv);
+        gallery.appendChild(questionDiv);
+    } else {
+        // Render costume category
+        const currentCategory = categories[currentCategoryIndex];
+
+        entries.forEach(async entry => {
+            const card = document.createElement('div');
+            card.className = 'costume-card';
+
+            if (votes[currentCategory.id] === entry.id) {
+                card.classList.add('selected');
+            }
+
+            // Create image element with loading state
+            const img = document.createElement('img');
+            img.alt = entry.costume_name;
+            img.style.opacity = '0.5';
+            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="250" height="250"%3E%3Crect fill="%232a2a2a" width="250" height="250"/%3E%3Ctext x="125" y="125" text-anchor="middle" fill="%23999" font-size="14"%3ELoading...%3C/text%3E%3C/svg%3E';
+
+            // Load image with proper headers
+            const imageUrl = `${API_BASE_URL}${entry.photo_url}`;
+            loadImageWithHeaders(imageUrl).then(blobUrl => {
+                img.src = blobUrl;
+                img.style.opacity = '1';
+            }).catch(err => {
+                console.error('Failed to load image:', err);
+                img.style.opacity = '1';
+            });
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'costume-card-info';
+            infoDiv.innerHTML = `
                 <h3>${entry.name}</h3>
                 <p>${entry.costume_name}</p>
-            </div>
-        `;
+            `;
 
-        card.onclick = () => selectEntry(entry.id);
+            card.appendChild(img);
+            card.appendChild(infoDiv);
+            card.onclick = () => selectEntry(entry.id);
 
-        gallery.appendChild(card);
-    });
+            gallery.appendChild(card);
+        });
+    }
 
     // Update navigation buttons
     updateNavButtons();
@@ -144,11 +239,19 @@ function selectEntry(entryId) {
     renderCategory();
 }
 
+// Select an option for a multiple choice question
+function selectMcOption(questionId, optionId) {
+    mcVotes[questionId] = optionId;
+    saveVotes();
+    renderCategory();
+}
+
 // Update navigation buttons
 function updateNavButtons() {
     const prevBtn = document.getElementById('prevCategory');
     const nextBtn = document.getElementById('nextCategory');
     const submitBtn = document.getElementById('submitVotes');
+    const totalItems = categories.length + mcQuestions.length;
 
     // Previous button
     prevBtn.style.display = currentCategoryIndex > 0 ? 'block' : 'none';
@@ -158,7 +261,7 @@ function updateNavButtons() {
     };
 
     // Next/Submit button
-    if (currentCategoryIndex < categories.length - 1) {
+    if (currentCategoryIndex < totalItems - 1) {
         nextBtn.style.display = 'block';
         submitBtn.style.display = 'none';
         nextBtn.onclick = () => {
@@ -174,10 +277,11 @@ function updateNavButtons() {
 // Submit all votes
 document.getElementById('submitVotes').addEventListener('click', async function() {
     // Check if all categories have votes
-    const votedCount = Object.keys(votes).length;
-    if (votedCount < categories.length) {
+    const totalItems = categories.length + mcQuestions.length;
+    const votedCount = Object.keys(votes).length + Object.keys(mcVotes).length;
+    if (votedCount < totalItems) {
         const confirm = window.confirm(
-            `You've only voted in ${votedCount} of ${categories.length} categories. ` +
+            `You've only voted in ${votedCount} of ${totalItems} categories. ` +
             `Do you want to submit anyway?`
         );
         if (!confirm) return;
@@ -191,8 +295,8 @@ document.getElementById('submitVotes').addEventListener('click', async function(
     try {
         const voterId = getVoterId();
 
-        // Submit each vote
-        const promises = Object.entries(votes).map(([categoryId, entryId]) => {
+        // Submit costume votes
+        const costumePromises = Object.entries(votes).map(([categoryId, entryId]) => {
             return fetch(`${API_BASE_URL}/api/votes`, {
                 method: 'POST',
                 headers: {
@@ -207,7 +311,23 @@ document.getElementById('submitVotes').addEventListener('click', async function(
             });
         });
 
-        await Promise.all(promises);
+        // Submit MC votes
+        const mcPromises = Object.entries(mcVotes).map(([questionId, optionId]) => {
+            return fetch(`${API_BASE_URL}/api/mc-votes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    option_id: optionId,
+                    voter_id: voterId
+                })
+            });
+        });
+
+        await Promise.all([...costumePromises, ...mcPromises]);
 
         // Success!
         showSuccess('🎉 Your votes have been submitted successfully! Thank you for participating!');

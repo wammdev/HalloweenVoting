@@ -26,6 +26,11 @@ from models import (
     CategoryResult,
     Category,
     ResultsRequest,
+    MCQuestion,
+    MCOption,
+    MCVoteCreate,
+    MCResultsResponse,
+    MCOptionResult,
 )
 import database
 
@@ -169,37 +174,93 @@ async def create_vote(vote: VoteCreate):
         raise HTTPException(status_code=500, detail="Failed to create vote")
 
 
-@app.post("/api/results", response_model=list[ResultsResponse])
+@app.get("/api/mc-questions", response_model=list[MCQuestion])
+async def get_mc_questions():
+    """Get all multiple choice questions"""
+    questions = await database.get_mc_questions()
+    return [
+        MCQuestion(
+            id=q["id"],
+            question=q["question"],
+            display_order=q["display_order"],
+            options=[
+                MCOption(id=opt["id"], option_text=opt["option_text"])
+                for opt in q["options"]
+            ]
+        )
+        for q in questions
+    ]
+
+
+@app.post("/api/mc-votes")
+async def create_mc_vote(vote: MCVoteCreate):
+    """Submit a vote for a multiple choice question"""
+    try:
+        vote_id = await database.create_mc_vote(
+            question_id=vote.question_id,
+            option_id=vote.option_id,
+            voter_id=vote.voter_id,
+        )
+        return {"success": True, "vote_id": vote_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to create vote")
+
+
+@app.post("/api/results")
 async def get_results(request: ResultsRequest):
     """Get voting results (password protected)"""
     if request.password != RESULTS_PASSWORD:
         raise HTTPException(status_code=403, detail="Invalid password")
 
+    # Get costume category results
     results = await database.get_results()
 
-    response = []
+    category_results = []
     for category_id, entries in results.items():
         category_name = next(
             (cat["name"] for cat in await database.get_categories() if cat["id"] == category_id),
             category_id
         )
 
-        category_results = [
-            CategoryResult(
-                entry_id=entry["entry_id"],
-                name=entry["name"],
-                costume_name=entry["costume_name"],
-                photo_url=f"/api/uploads/{entry['photo_filename']}",
-                vote_count=entry["vote_count"],
-            )
-            for entry in entries
-        ]
+        category_results.append({
+            "category": category_name,
+            "results": [
+                {
+                    "entry_id": entry["entry_id"],
+                    "name": entry["name"],
+                    "costume_name": entry["costume_name"],
+                    "photo_url": f"/api/uploads/{entry['photo_filename']}",
+                    "vote_count": entry["vote_count"],
+                }
+                for entry in entries
+            ]
+        })
 
-        response.append(
-            ResultsResponse(category=category_name, results=category_results)
-        )
+    # Get multiple choice results
+    mc_results = await database.get_mc_results()
 
-    return response
+    mc_results_list = [
+        {
+            "question_id": q_id,
+            "question": data["question"],
+            "options": [
+                {
+                    "option_id": opt["option_id"],
+                    "option_text": opt["option_text"],
+                    "vote_count": opt["vote_count"],
+                }
+                for opt in data["options"]
+            ]
+        }
+        for q_id, data in mc_results.items()
+    ]
+
+    return {
+        "category_results": category_results,
+        "mc_results": mc_results_list
+    }
 
 
 @app.get("/api/uploads/{filename}")

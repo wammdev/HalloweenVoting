@@ -380,6 +380,60 @@ header h1 {
     font-size: 0.9rem;
 }
 
+/* Multiple Choice Questions */
+.mc-question-container {
+    text-align: center;
+    margin: 20px 0;
+    grid-column: 1 / -1; /* Span all columns in parent grid */
+}
+
+.mc-question-title {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+}
+
+.mc-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.mc-option-card {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 40px 30px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 3px solid transparent;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mc-option-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--secondary-color);
+}
+
+.mc-option-card.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.mc-option-text {
+    font-size: 1.3rem;
+    color: var(--text-light);
+    font-weight: 500;
+    text-align: center;
+}
+
 .nav-buttons {
     display: flex;
     gap: 15px;
@@ -469,6 +523,85 @@ header h1 {
     min-width: 80px;
 }
 
+/* Multiple Choice Results */
+.mc-results-category {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 3px solid var(--secondary-color);
+}
+
+.mc-results-list {
+    display: grid;
+    gap: 15px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.mc-result-item {
+    background: var(--light-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.mc-result-item.mc-winner {
+    border: 3px solid gold;
+    background: linear-gradient(135deg, var(--light-bg) 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
+.mc-result-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.mc-result-rank {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+    min-width: 50px;
+    text-align: center;
+}
+
+.mc-result-item.mc-winner .mc-result-rank {
+    color: gold;
+}
+
+.mc-result-text {
+    flex: 1;
+    font-size: 1.1rem;
+}
+
+.mc-result-stats {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 1rem;
+}
+
+.mc-vote-count {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.mc-percentage {
+    color: var(--text-gray);
+}
+
+.mc-result-bar {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.mc-result-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    transition: width 0.5s ease;
+}
+
 /* Footer */
 footer {
     text-align: center;
@@ -522,6 +655,15 @@ footer {
     .results-header {
         flex-direction: column;
         gap: 15px;
+    }
+
+    .mc-options {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .mc-result-content {
+        flex-wrap: wrap;
     }
 }
 

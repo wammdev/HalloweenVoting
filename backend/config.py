@@ -12,6 +12,19 @@ CATEGORIES = [
     {"id": "nontheme", "name": "Non-Theme: Off the Record", "order": 5},
 ]
 
+# Multiple choice voting questions (not tied to entries)
+MULTIPLE_CHOICE_QUESTIONS = [
+    {
+        "id": "next_year_theme",
+        "question": "What should next year's Halloween party theme be?",
+        "order": 6,  # Appears after all costume categories
+        "options": [
+            {"id": "sat_morning_cartoons", "text": "Saturday Morning Cartoons/Sunday Funnies"},
+            {"id": "scifi", "text": "Sci-Fi"},
+        ]
+    }
+]
+
 # Results password - CHANGE THIS!
 RESULTS_PASSWORD = os.getenv("RESULTS_PASSWORD", "spooky2025")
 
