@@ -137,6 +137,7 @@ function renderCategoryTabs() {
 // Render current category's costumes
 function renderCategory() {
     const gallery = document.getElementById('costumeGallery');
+    const instructionsDiv = document.querySelector('.voting-instructions');
 
     // Update tabs
     renderCategoryTabs();
@@ -149,6 +150,13 @@ function renderCategory() {
     const votedCount = Object.keys(votes).length + Object.keys(mcVotes).length;
     const statusText = `You've voted in ${votedCount} of ${totalCategories} categories`;
     document.getElementById('votingStatus').textContent = statusText;
+
+    // Show/hide instructions based on question type
+    if (isMcQuestion) {
+        instructionsDiv.style.display = 'none';
+    } else {
+        instructionsDiv.style.display = 'block';
+    }
 
     // Render appropriate content
     gallery.innerHTML = '';
@@ -187,6 +195,12 @@ function renderCategory() {
     } else {
         // Render costume category
         const currentCategory = categories[currentCategoryIndex];
+
+        // Add category header
+        const categoryHeader = document.createElement('div');
+        categoryHeader.className = 'mc-question-container';
+        categoryHeader.innerHTML = `<h2 class="mc-question-title">${currentCategory.name}</h2>`;
+        gallery.appendChild(categoryHeader);
 
         entries.forEach(async entry => {
             const card = document.createElement('div');
